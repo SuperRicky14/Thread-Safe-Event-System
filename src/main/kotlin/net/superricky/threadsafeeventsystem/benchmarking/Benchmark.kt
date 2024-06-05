@@ -1,7 +1,7 @@
 package net.superricky.threadsafeeventsystem.benchmarking
 
-import net.superricky.threadsafeeventsystem.system.EventBusSingleton
-import net.superricky.threadsafeeventsystem.system.EventListener
+import net.superricky.threadsafeeventsystem.system.EventBus
+import net.superricky.threadsafeeventsystem.system.IEventListener
 
 /**
  * This is just a demo benchmark of our thread safe kotlin event system, that you can run for yourself.
@@ -20,7 +20,7 @@ suspend fun main() {
         val startTimeRegister = System.currentTimeMillis()
         for (i in 1..eventListenerCount) {
             val tempListener = BenchmarkEventListener()
-            EventBusSingleton.register(BenchmarkEvent::class.java, tempListener)
+            EventBus.register(BenchmarkEvent::class.java, tempListener)
         }
         val registerTime = (System.currentTimeMillis() - startTimeRegister).toDouble() / 1000
         totalRegisterTime += registerTime
@@ -29,7 +29,7 @@ suspend fun main() {
         println("Dispatching Event!")
         val startTimeDispatch = System.currentTimeMillis()
         val testEvent = BenchmarkEvent()
-        val dispatchJob = EventBusSingleton.dispatch(testEvent)
+        val dispatchJob = EventBus.dispatch(testEvent)
         val dispatchTime = (System.currentTimeMillis() - startTimeDispatch).toDouble() / 1000
         totalDispatchTime += dispatchTime
         dispatchJob.join()
@@ -37,8 +37,8 @@ suspend fun main() {
 
         println("Unregistering all Listeners!")
         val startTimeUnregister = System.currentTimeMillis()
-        EventBusSingleton.getRegisteredEventsOfType(BenchmarkEvent::class.java)?.forEach { eventListener ->
-            EventBusSingleton.unregister(BenchmarkEvent::class.java, eventListener as EventListener<BenchmarkEvent>)
+        EventBus.getRegisteredEventsOfType(BenchmarkEvent::class.java)?.forEach { eventListener ->
+            EventBus.unregister(BenchmarkEvent::class.java, eventListener as IEventListener<BenchmarkEvent>)
         }
         val unregisterTime = (System.currentTimeMillis() - startTimeUnregister).toDouble() / 1000
         totalUnregisterTime += unregisterTime

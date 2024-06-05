@@ -1,24 +1,26 @@
 package net.superricky.threadsafeeventsystem.system
 
 import kotlinx.coroutines.*
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-
-val EventBusSingleton: EventBusFrontend = EventBus
 
 // Coroutine stuff
 private val dispatcher = Dispatchers.Default
 private val scope = CoroutineScope(dispatcher)
 
-private object EventBus : EventBusFrontend {
-    private val listeners = ConcurrentHashMap<Class<out Event>, MutableSet<EventListener<out Event>>>()
+/**
+ * We specify the type for our EventBus val to be IEventBus, preventing people from accessing the
+ * object directly, and only allowing access through our interface. This allows our code to be further
+ * decoupled and easier to maintain, and makes changes to the EventBus require less work.
+ */
+val EventBus: IEventBus = object : IEventBus {
+    private val listeners = ConcurrentHashMap<Class<out Event>, MutableSet<IEventListener<out Event>>>()
 
     /**
      * Register a listener for a specific event type
      * This function took 0.00255s on average to register 50,000 events listeners
      * Time Complexity: O(1) (for hash map lookup) + O(1) (for adding item to hashset) = O(1)
      */
-    override fun <T : Event> register(eventType: Class<T>, listener: EventListener<T>) {
+    override fun <T : Event> register(eventType: Class<T>, listener: IEventListener<T>) {
         listeners.computeIfAbsent(eventType) { ConcurrentHashMap.newKeySet() }.add(listener)
     }
 
@@ -27,12 +29,12 @@ private object EventBus : EventBusFrontend {
      * This function took 0.00257s on average to unregister 50,000 event listeners
      * Time Complexity: O(1) (for hash map lookup) + O(1) (for removing item from hashset) = O(1)
      */
-    override fun <T : Event> unregister(eventType: Class<T>, listener: EventListener<T>) {
+    override fun <T : Event> unregister(eventType: Class<T>, listener: IEventListener<T>) {
         listeners[eventType]?.remove(listener)
     }
 
     // Only used for benchmarking / debugging, this will not be shipped in production.
-    override fun <T : Event> getRegisteredEventsOfType(eventType: Class<T>): MutableSet<EventListener<out Event>>? {
+    override fun <T : Event> getRegisteredEventsOfType(eventType: Class<T>): MutableSet<IEventListener<out Event>>? {
         return listeners[eventType]
     }
 
@@ -48,7 +50,7 @@ private object EventBus : EventBusFrontend {
         listeners[event::class.java]?.forEach { listener ->
             launch {
                 @Suppress("UNCHECKED_CAST")
-                (listener as EventListener<T>).onEvent(event)
+                (listener as IEventListener<T>).onEvent(event)
             }
         }
     }
@@ -73,7 +75,7 @@ private object EventBus : EventBusFrontend {
             listeners[event::class.java]?.map { listener ->
                 launch {
                     @Suppress("UNCHECKED_CAST")
-                    (listener as EventListener<T>).onEvent(event)
+                    (listener as IEventListener<T>).onEvent(event)
                 }
             }?.joinAll()
         }.join()

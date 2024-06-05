@@ -1,5 +1,5 @@
 package net.superricky.threadsafeeventsystem.system
 
-interface EventListener<T : Event> {
+interface IEventListener<T : Event> {
     suspend fun onEvent(event: T)
 }

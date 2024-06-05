@@ -1,14 +1,14 @@
 package net.superricky.threadsafeeventsystem.examples
 
 import net.superricky.threadsafeeventsystem.system.Event
-import net.superricky.threadsafeeventsystem.system.EventBusSingleton
-import net.superricky.threadsafeeventsystem.system.EventListener
+import net.superricky.threadsafeeventsystem.system.EventBus
+import net.superricky.threadsafeeventsystem.system.IEventListener
 
 // Create a new event, you can use whatever parameters you want, strings, primitive types, other classes, etc.
 class MyEvent(val message: String) : Event()
 
 // Create an Event Listener, this class will handle our MyEvent event.
-class MyEventListener : EventListener<MyEvent> {
+class MyEventListener : IEventListener<MyEvent> {
     // Override the onEvent function present in the EventListener interface, this will be called whenever an event is dispatched by the event bus.
     // This is a suspend function because our listener uses Kotlin coroutines, this is pretty much just to support delays and other features coroutines allow.
     // You don't have to use anything within coroutines.
@@ -33,7 +33,7 @@ fun main() {
      *     The object reference to the event listener you wish to bind it to
      * IMPORTANT: You MUST make sure that you specify the right event for the right event listener, otherwise you will likely get some pretty nasty errors related to type-safety.
      */
-    EventBusSingleton.register(MyEvent::class.java, myEventListener)
+    EventBus.register(MyEvent::class.java, myEventListener)
 
     println("Dispatching MyEvent!")
     val myEvent1 = MyEvent("Hello, World!")
@@ -43,17 +43,17 @@ fun main() {
     // Essentially, if you want things to happen in order (i.e. some code -> dispatch to event listeners -> run more code), you use dispatchBlocking.
     // If you were in a real application, and you just want the event to be dispatched, not caring about the order it happens in, you would use dispatch.
     // Just calling dispatch will dispatch your event and then continue running whatever code you have on this thread.
-    EventBusSingleton.dispatchBlocking(myEvent1)
+    EventBus.dispatchBlocking(myEvent1)
 
     println("Dispatching another MyEvent!")
     val myEvent2 = MyEvent("Hello, Again!")
-    EventBusSingleton.dispatchBlocking(myEvent2)
+    EventBus.dispatchBlocking(myEvent2)
 
     println("Unregistering MyEventListener")
     /*
      * To unregister an event, the process is the same as registering, except we just call the unregister method instead.
      */
-    EventBusSingleton.unregister(MyEvent::class.java, myEventListener)
+    EventBus.unregister(MyEvent::class.java, myEventListener)
 
     println("Dispatching another another MyEvent!")
     val myEvent3 = MyEvent("Hello Again, World!")
@@ -61,7 +61,7 @@ fun main() {
     // This should display nothing, as the event listener watching this event was unregistered, meaning no-one is listening to this event.
     // This is essentially the main benefit of event-driven architecture, as it serves as a good way to completely decouple code from each-other.
     // You can also notice how there were no errors here, because this method doesn't care what happens after the event is dispatched, we just send off the event and go about our day.
-    EventBusSingleton.dispatchBlocking(myEvent3)
+    EventBus.dispatchBlocking(myEvent3)
 
     println("End of program.")
 }

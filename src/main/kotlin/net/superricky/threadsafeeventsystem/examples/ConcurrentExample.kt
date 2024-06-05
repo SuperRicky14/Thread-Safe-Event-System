@@ -3,23 +3,21 @@ package net.superricky.threadsafeeventsystem.examples
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import net.superricky.threadsafeeventsystem.system.Event
-import net.superricky.threadsafeeventsystem.system.EventBusSingleton
-import net.superricky.threadsafeeventsystem.system.EventListener
+import net.superricky.threadsafeeventsystem.system.EventBus
+import net.superricky.threadsafeeventsystem.system.IEventListener
 
 class MyConcurrentEvent(val message: String) : Event()
 
-class MyConcurrentEventListener() : EventListener<MyConcurrentEvent> {
+val MyConcurrentEventListener = object : IEventListener<MyConcurrentEvent> {
     override suspend fun onEvent(event: MyConcurrentEvent) {
-        println("Hello, World")
+        println(event.message)
         delay(1000)
         println("I'm Alive!")
     }
 
-    // You can also make any EventListener auto-register themselves as soon as they are created, inside their constructor.
-    // This does not work correctly with object {} singletons, as they lazy initialize, basically meaning they won't do this at startup, leaving you with a bunch of unregistered singleton objects sitting around wasting memory.
     init {
-        println("Registering MyConcurrentEventListener!")
-        EventBusSingleton.register(MyConcurrentEvent::class.java, this)
+        // println("Registering MyConcurrentEventListener!") Like in SuperAdvancedExample, this is commented out to prevent random messages in other tutorials.
+        EventBus.register(MyConcurrentEvent::class.java, this)
     }
 }
 
@@ -27,14 +25,11 @@ class MyConcurrentEventListener() : EventListener<MyConcurrentEvent> {
 fun main() = runBlocking {
     println("Thread Safe Event System Concurrent Example")
 
-    println("Creating MyConcurrentEventListener!")
-    val myConcurrentEventListener = MyConcurrentEventListener()
-
     // We already auto-registered our concurrentEventListener here, so we don't need to worry about that.
 
     println("This should run before the \"Hello, World!\", message, and the \"I'm Alive!\" message.")
     delay(250)
-    EventBusSingleton.dispatch(MyConcurrentEvent("Hello, World!")) // Create a MyConcurrentEvent and dispatch it, we don't need a reference to it anymore.
+    EventBus.dispatch(MyConcurrentEvent("Hello, World!")) // Create a MyConcurrentEvent and dispatch it, we don't need a reference to it anymore.
     delay(500)
     println("This should print inbetween both messages.")
     delay(1000)

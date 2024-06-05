@@ -1,8 +1,8 @@
 package net.superricky.threadsafeeventsystem.examples
 
 import net.superricky.threadsafeeventsystem.system.Event
-import net.superricky.threadsafeeventsystem.system.EventBusSingleton
-import net.superricky.threadsafeeventsystem.system.EventListener
+import net.superricky.threadsafeeventsystem.system.EventBus
+import net.superricky.threadsafeeventsystem.system.IEventListener
 
 // This intermediate example shows a more object-oriented way of creating events.
 
@@ -18,7 +18,7 @@ class MyOOEvent(val message: String, val printIterations: Int) : Event() {
     }
 }
 
-class MyOOEventListener : EventListener<MyOOEvent> {
+class MyOOEventListener : IEventListener<MyOOEvent> {
     // Same as above, we override our onEvent function here, except this time we call the handleSelf() method in the event dispatched to this listener.
     override suspend fun onEvent(event: MyOOEvent) {
         event.handleSelf()
@@ -32,11 +32,11 @@ fun main() {
     val myOOEventListener = MyOOEventListener()
 
     println("Registering MyOOEventListener")
-    EventBusSingleton.register(MyOOEvent::class.java, myOOEventListener) // Exactly the same as in the beginner example
+    EventBus.register(MyOOEvent::class.java, myOOEventListener) // Exactly the same as in the beginner example
 
     println("Dispatching MyOOEvent!")
     val myOOEvent = MyOOEvent("Hello, World!", 5)
-    EventBusSingleton.dispatch(myOOEvent) // Again, the same as in the beginner example
+    EventBus.dispatch(myOOEvent) // Again, the same as in the beginner example
 
     println("End of program.")
 }
